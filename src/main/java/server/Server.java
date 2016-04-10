@@ -32,52 +32,47 @@ public class Server extends Thread{
     }
 
     public void run() {
-        String clientSentence;
-        String capitalizedSentence;
-
-        try {
-            ServerSocket serverSock = new ServerSocket();
+        try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
-
             System.out.println("Server was started.");
+
             while(true) {
-                Socket connectionSocket = serverSock.accept();
-                InputStream in = connectionSocket.getInputStream();
-                OutputStream out = connectionSocket.getOutputStream();
+                try ( Socket connectionSocket = serverSock.accept();
+                      InputStream in = connectionSocket.getInputStream();
+                      OutputStream out = connectionSocket.getOutputStream()) {
 
-                Protocol.WrapperMessage requestMessage = Protocol.WrapperMessage.parseDelimitedFrom(in);
-                Protocol.ServerRequest request = requestMessage.getRequest();
+                    Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
+                    Common.printServerRequest(request);
 
-                Protocol.ServerResponse.Builder response = Protocol.ServerResponse.newBuilder().
-                        setRequestId(request.getRequestId());
+                    Protocol.ServerResponse.Builder response = Protocol.ServerResponse.newBuilder().
+                            setRequestId(request.getRequestId());
 
-                Protocol.WrapperMessage wrapperMessage;
+                    if (request.hasSubmit()) {
+                        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
+                                setSubmittedTaskId(5).
+                                setStatus(Protocol.Status.OK);
+                        response.setSubmitResponse(submitTaskResponse);
+                    } else if (request.hasList()) {
 
+                    } else if (request.hasSubscribe()) {
 
-                Protocol.SubmitTask submit = request.getSubmit();
+                    } else {
+                        System.err.println("Unknown type of request");
+                    }
 
-                int taskId = 5;
+                    Protocol.WrapperMessage responseMessage = Protocol.WrapperMessage.newBuilder().
+                            setResponse(response).
+                            build();
 
-                Common.printServerRequest(request);
-
-                Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
-                        setSubmittedTaskId(taskId).
-                        setStatus(Protocol.Status.OK);
-                response.setSubmitResponse(submitTaskResponse);
-
-
-
-
-                Protocol.WrapperMessage responseMessage = Protocol.WrapperMessage.newBuilder().
-                        setResponse(response).
-                        build();
-
-                Common.printTaskRepsonse(responseMessage.getResponse());
-                responseMessage.writeTo(out);
-                connectionSocket.close();
+                    Common.printTaskRepsonse(responseMessage.getResponse());
+                    responseMessage.writeTo(out);
+                } catch (IOException e) {
+                    System.err.println("Messaging problems");
+                    e.printStackTrace();
+                }
             }
         } catch (IOException e) {
-            System.out.println("Error create server at port: " + this.port);
+            System.err.println("Error create server at port: " + this.port);
             e.printStackTrace();
         }
     }
