@@ -19,12 +19,12 @@ public class SimpleTests {
     @Test
     public void SimpleTest() throws InterruptedException {
 
-        Thread serverThread = new Thread(new Server("localhost", 15));
+        Thread serverThread = new Thread(new Server("localhost", 1500));
         serverThread.start();
 
         Thread.sleep(1000);
 
-        Client client = new Client("localhost", 15);
+        Client client = new Client("localhost", 1500);
         client.submitTask(getSimpleTask());
 
         serverThread.stop();

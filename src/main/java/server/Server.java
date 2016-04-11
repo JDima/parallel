@@ -8,15 +8,20 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Server extends Thread{
 
     private int port;
     private String host;
+    private TaskManager taskManager;
 
     public Server(String host, int port) {
         this.host = host;
         this.port = port;
+        this.taskManager = new TaskManager();
+
     }
 
     public static void main(String args[]) {
@@ -31,19 +36,31 @@ public class Server extends Thread{
         return host;
     }
 
-    public Protocol.ServerResponse.Builder getSubmitResponse(Protocol.ServerResponse.Builder response) {
+    public Protocol.ServerResponse.Builder getSubmitResponse(Protocol.ServerRequest request,
+                                                             Protocol.ServerResponse.Builder response) {
+
+        Protocol.Task task = request.getSubmit().getTask();
+        int taskId = taskManager.addTask(task);
+
         Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
-                setSubmittedTaskId(5).
+                setSubmittedTaskId(taskId).
                 setStatus(Protocol.Status.OK);
         response.setSubmitResponse(submitTaskResponse);
         return response;
     }
 
     public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerResponse.Builder response) {
+        LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
+        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks);
+        response.setListResponse(submitTaskResponse);
         return response;
     }
 
-    public Protocol.ServerResponse.Builder getSubscribeResponse(Protocol.ServerResponse.Builder response) {
+    public Protocol.ServerResponse.Builder getSubscribeResponse(Protocol.ServerRequest request,
+                                                                Protocol.ServerResponse.Builder response) {
+        long result = taskManager.getResult(request.getSubscribe().getTaskId());
+        Protocol.SubscribeResponse.Builder subscribeTaskResponse = Protocol.SubscribeResponse.newBuilder().setValue(result);
+        response.setSubscribeResponse(subscribeTaskResponse);
         return response;
     }
 
@@ -73,11 +90,11 @@ public class Server extends Thread{
                             setRequestId(request.getRequestId());
 
                     if (request.hasSubmit()) {
-                        response = getSubmitResponse(response);
+                        response = getSubmitResponse(request, response);
                     } else if (request.hasList()) {
                         response = getListResponse(response);
                     } else if (request.hasSubscribe()) {
-                        response = getSubscribeResponse(response);
+                        response = getSubscribeResponse(request, response);
                     } else {
                         System.err.println("Unknown type of request");
                     }
