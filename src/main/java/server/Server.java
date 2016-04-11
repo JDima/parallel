@@ -31,6 +31,31 @@ public class Server extends Thread{
         return host;
     }
 
+    public Protocol.ServerResponse.Builder getSubmitResponse(Protocol.ServerResponse.Builder response) {
+        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
+                setSubmittedTaskId(5).
+                setStatus(Protocol.Status.OK);
+        response.setSubmitResponse(submitTaskResponse);
+        return response;
+    }
+
+    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerResponse.Builder response) {
+        return response;
+    }
+
+    public Protocol.ServerResponse.Builder getSubscribeResponse(Protocol.ServerResponse.Builder response) {
+        return response;
+    }
+
+    public void writeMessageToStream(Protocol.ServerResponse.Builder response, OutputStream out) throws IOException {
+        Protocol.WrapperMessage responseMessage = Protocol.WrapperMessage.newBuilder().
+                setResponse(response).
+                build();
+
+        Common.printTaskRepsonse(responseMessage.getResponse());
+        responseMessage.writeTo(out);
+    }
+
     public void run() {
         try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
@@ -48,26 +73,18 @@ public class Server extends Thread{
                             setRequestId(request.getRequestId());
 
                     if (request.hasSubmit()) {
-                        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
-                                setSubmittedTaskId(5).
-                                setStatus(Protocol.Status.OK);
-                        response.setSubmitResponse(submitTaskResponse);
+                        response = getSubmitResponse(response);
                     } else if (request.hasList()) {
-
+                        response = getListResponse(response);
                     } else if (request.hasSubscribe()) {
-
+                        response = getSubscribeResponse(response);
                     } else {
                         System.err.println("Unknown type of request");
                     }
 
-                    Protocol.WrapperMessage responseMessage = Protocol.WrapperMessage.newBuilder().
-                            setResponse(response).
-                            build();
-
-                    Common.printTaskRepsonse(responseMessage.getResponse());
-                    responseMessage.writeTo(out);
+                    writeMessageToStream(response, out);
                 } catch (IOException e) {
-                    System.err.println("Messaging problems");
+                    System.err.println("Server problems");
                     e.printStackTrace();
                 }
             }
