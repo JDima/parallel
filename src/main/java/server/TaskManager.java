@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class TaskManager {
 
@@ -18,15 +17,26 @@ public class TaskManager {
         taskStore = new HashMap<Integer, ClientTask>();
     }
 
-    public int addTask(Protocol.Task task) {
+    public int addTask(String clientId, Protocol.Task task) {
         int taskId = taskCount.addAndGet(1);
-        ClientTask clientTask = new ClientTask(task);
+        ClientTask clientTask = new ClientTask(clientId, task);
         taskStore.put(taskId, clientTask);
         return taskId;
     }
 
     public LinkedList<Protocol.ListTasksResponse.TaskDescription> getTasks() {
-        return null;
+        LinkedList<Protocol.ListTasksResponse.TaskDescription> listTasks = new LinkedList<>();
+        for (Map.Entry<Integer, ClientTask> taskInfo : taskStore.entrySet()) {
+            ClientTask task = taskInfo.getValue();
+            Protocol.ListTasksResponse.TaskDescription.Builder descDuilder = Protocol.ListTasksResponse.TaskDescription.newBuilder();
+
+            descDuilder.setTask(task.getTask());
+            descDuilder.setTaskId(taskInfo.getKey());
+            if (task.isSolved())
+                descDuilder.setResult(task.getResult());
+            descDuilder.setClientId(task.getClientId());
+        }
+        return listTasks;
     }
 
     public long getResult(int taskId) {

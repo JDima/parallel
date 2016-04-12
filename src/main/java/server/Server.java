@@ -40,7 +40,7 @@ public class Server extends Thread{
                                                              Protocol.ServerResponse.Builder response) {
 
         Protocol.Task task = request.getSubmit().getTask();
-        int taskId = taskManager.addTask(task);
+        int taskId = taskManager.addTask(request.getClientId(), task);
 
         Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
                 setSubmittedTaskId(taskId).
@@ -49,9 +49,10 @@ public class Server extends Thread{
         return response;
     }
 
-    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerResponse.Builder response) {
+    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerRequest request,
+                                                           Protocol.ServerResponse.Builder response) {
         LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
-        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks);
+        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks).setStatus(Protocol.Status.OK);
         response.setListResponse(submitTaskResponse);
         return response;
     }
@@ -92,13 +93,13 @@ public class Server extends Thread{
                     if (request.hasSubmit()) {
                         response = getSubmitResponse(request, response);
                     } else if (request.hasList()) {
-                        response = getListResponse(response);
+                        response = getListResponse(request, response);
                     } else if (request.hasSubscribe()) {
                         response = getSubscribeResponse(request, response);
                     } else {
                         System.err.println("Unknown type of request");
                     }
-
+                    response.setRequestId(request.getRequestId());
                     writeMessageToStream(response, out);
                 } catch (IOException e) {
                     System.err.println("Server problems");
