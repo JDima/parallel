@@ -6,7 +6,7 @@ public class ClientTask {
 
     private Protocol.Task task;
     private boolean isSolved;
-    private int result;
+    private long result;
     private String clientId;
 
     public ClientTask(String clientId, Protocol.Task task) {
@@ -27,11 +27,16 @@ public class ClientTask {
         return isSolved;
     }
 
-    public int getResult() {
+    public long getResult() {
         return result;
     }
 
     public String getClientId() {
         return clientId;
+    }
+
+    public void updateSolution(long result) {
+        this.result = result;
+        isSolved = true;
     }
 }

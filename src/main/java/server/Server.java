@@ -49,8 +49,7 @@ public class Server extends Thread{
         return response;
     }
 
-    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerRequest request,
-                                                           Protocol.ServerResponse.Builder response) {
+    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerResponse.Builder response) {
         LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
         Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks).setStatus(Protocol.Status.OK);
         response.setListResponse(submitTaskResponse);
@@ -93,7 +92,7 @@ public class Server extends Thread{
                     if (request.hasSubmit()) {
                         response = getSubmitResponse(request, response);
                     } else if (request.hasList()) {
-                        response = getListResponse(request, response);
+                        response = getListResponse(response);
                     } else if (request.hasSubscribe()) {
                         response = getSubscribeResponse(request, response);
                     } else {

@@ -10,17 +10,22 @@ public class TaskManager {
 
     private AtomicInteger taskCount;
 
-    private HashMap<Integer, ClientTask> taskStore;
+    private TaskSolver taskSolver;
+
+    private TaskStore taskStore;
 
     public TaskManager() {
         taskCount = new AtomicInteger();
-        taskStore = new HashMap<Integer, ClientTask>();
+        taskStore = new TaskStore();
+        taskSolver = new TaskSolver(taskStore);
+
     }
 
     public int addTask(String clientId, Protocol.Task task) {
         int taskId = taskCount.addAndGet(1);
         ClientTask clientTask = new ClientTask(clientId, task);
-        taskStore.put(taskId, clientTask);
+        taskStore.addTask(taskId, clientTask);
+        taskSolver.solveTask(clientTask);
         return taskId;
     }
 
