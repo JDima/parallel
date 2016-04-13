@@ -49,11 +49,15 @@ public class TaskSolver {
                     e.printStackTrace();
                 }
             }
-            Protocol.Task task = clientTask.getTask();
-            long result = solve(getValue(task.getA()), getValue(task.getB()),
-                    getValue(task.getP()), getValue(task.getM()), task.getN());
-            monitor.notifyAll();
-            return result;
         }
+        Protocol.Task task = clientTask.getTask();
+        long result = solve(getValue(task.getA()), getValue(task.getB()),
+                getValue(task.getP()), getValue(task.getM()), task.getN());
+
+        synchronized(monitor) {
+            monitor.notifyAll();
+        }
+
+        return result;
     }
 }

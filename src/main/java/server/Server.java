@@ -3,6 +3,9 @@ package server;
 
 import communication.Common;
 import communication.Protocol;
+import server.tasks.ListTask;
+import server.tasks.SubmitTask;
+import server.tasks.SubscribeTask;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -36,70 +39,29 @@ public class Server extends Thread{
         return host;
     }
 
-    public Protocol.ServerResponse.Builder getSubmitResponse(Protocol.ServerRequest request,
-                                                             Protocol.ServerResponse.Builder response) {
-
-        Protocol.Task task = request.getSubmit().getTask();
-        int taskId = taskManager.addTask(request.getClientId(), task);
-
-        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
-                setSubmittedTaskId(taskId).
-                setStatus(Protocol.Status.OK);
-        response.setSubmitResponse(submitTaskResponse);
-        return response;
-    }
-
-    public Protocol.ServerResponse.Builder getListResponse(Protocol.ServerResponse.Builder response) {
-        LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
-        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks).setStatus(Protocol.Status.OK);
-        response.setListResponse(submitTaskResponse);
-        return response;
-    }
-
-    public Protocol.ServerResponse.Builder getSubscribeResponse(Protocol.ServerRequest request,
-                                                                Protocol.ServerResponse.Builder response) {
-        long result = taskManager.getResult(request.getSubscribe().getTaskId());
-        Protocol.SubscribeResponse.Builder subscribeTaskResponse = Protocol.SubscribeResponse.newBuilder().setValue(result);
-        response.setSubscribeResponse(subscribeTaskResponse);
-        return response;
-    }
-
-    public void writeMessageToStream(Protocol.ServerResponse.Builder response, OutputStream out) throws IOException {
-        Protocol.WrapperMessage responseMessage = Protocol.WrapperMessage.newBuilder().
-                setResponse(response).
-                build();
-
-        Common.printTaskRepsonse(responseMessage.getResponse());
-        responseMessage.writeTo(out);
-    }
-
     public void run() {
         try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
             System.out.println("Server was started.");
 
             while(true) {
-                try ( Socket connectionSocket = serverSock.accept();
-                      InputStream in = connectionSocket.getInputStream();
-                      OutputStream out = connectionSocket.getOutputStream()) {
+                try {
+                    Socket connectionSocket = serverSock.accept();
+                    InputStream in = connectionSocket.getInputStream();
 
                     Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
-                    Common.printServerRequest(request);
-
-                    Protocol.ServerResponse.Builder response = Protocol.ServerResponse.newBuilder().
-                            setRequestId(request.getRequestId());
 
                     if (request.hasSubmit()) {
-                        response = getSubmitResponse(request, response);
+                        new Thread(new SubmitTask(connectionSocket, request, taskManager)).start();
                     } else if (request.hasList()) {
-                        response = getListResponse(response);
+                        new Thread(new ListTask(connectionSocket, request, taskManager)).start();
                     } else if (request.hasSubscribe()) {
-                        response = getSubscribeResponse(request, response);
+                        new Thread(new SubscribeTask(connectionSocket, request, taskManager)).start();
                     } else {
                         System.err.println("Unknown type of request");
                     }
-                    response.setRequestId(request.getRequestId());
-                    writeMessageToStream(response, out);
+
+                    in.close();
                 } catch (IOException e) {
                     System.err.println("Server problems");
                     e.printStackTrace();
