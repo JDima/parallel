@@ -53,22 +53,18 @@ public class Server extends Thread{
                 Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
                 Thread thread;
                 if (request.hasSubmit()) {
-                    thread = new Thread(new SubmitTask(connectionSocket, request, taskManager));
+                    new SubmitTask(connectionSocket, request, taskManager).run();
                 } else if (request.hasList()) {
-                    thread = new Thread(new ListTask(connectionSocket, request, taskManager));
+                    new ListTask(connectionSocket, request, taskManager).run();
                 } else if (request.hasSubscribe()) {
-                    thread = new Thread(new SubscribeTask(connectionSocket, request, taskManager));
+                    new SubscribeTask(connectionSocket, request, taskManager).run();
                 } else {
                     System.err.println("Unknown type of request");
                     throw new IOException();
                 }
-                thread.start();
-                thread.join();
 
             } catch (IOException e) {
                 System.err.println("Server problems");
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
