@@ -39,33 +39,48 @@ public class Server extends Thread{
         return host;
     }
 
+    public class Request extends Thread {
+        private Socket connectionSocket;
+
+        public Request (Socket connectionSocket) {
+            this.connectionSocket = connectionSocket;
+        }
+
+        @Override
+        public void run() {
+            try (InputStream in = connectionSocket.getInputStream()) {
+
+                Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
+                Thread thread;
+                if (request.hasSubmit()) {
+                    thread = new Thread(new SubmitTask(connectionSocket, request, taskManager));
+                } else if (request.hasList()) {
+                    thread = new Thread(new ListTask(connectionSocket, request, taskManager));
+                } else if (request.hasSubscribe()) {
+                    thread = new Thread(new SubscribeTask(connectionSocket, request, taskManager));
+                } else {
+                    System.err.println("Unknown type of request");
+                    throw new IOException();
+                }
+                thread.start();
+                thread.join();
+
+            } catch (IOException e) {
+                System.err.println("Server problems");
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void run() {
         try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
             System.out.println("Server was started.");
 
             while(true) {
-                try {
-                    Socket connectionSocket = serverSock.accept();
-                    InputStream in = connectionSocket.getInputStream();
-
-                    Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
-
-                    if (request.hasSubmit()) {
-                        new Thread(new SubmitTask(connectionSocket, request, taskManager)).start();
-                    } else if (request.hasList()) {
-                        new Thread(new ListTask(connectionSocket, request, taskManager)).start();
-                    } else if (request.hasSubscribe()) {
-                        new Thread(new SubscribeTask(connectionSocket, request, taskManager)).start();
-                    } else {
-                        System.err.println("Unknown type of request");
-                    }
-
-                    in.close();
-                } catch (IOException e) {
-                    System.err.println("Server problems");
-                    e.printStackTrace();
-                }
+                new Request(serverSock.accept()).start();
             }
         } catch (IOException e) {
             System.err.println("Error create server at port: " + this.port);
