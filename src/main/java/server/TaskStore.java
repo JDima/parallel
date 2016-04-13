@@ -18,7 +18,7 @@ public class TaskStore {
         return taskStore.get(taskId).isSolved();
     }
 
-    public void addTask(int taskId, ClientTask clientTask) {
+    public synchronized void addTask(int taskId, ClientTask clientTask) {
         taskStore.put(taskId, clientTask);
     }
 
@@ -30,7 +30,7 @@ public class TaskStore {
         return taskStore.get(taskId).getResult();
     }
 
-    public void updateSolution(int taskId, long result) {
+    public synchronized void updateSolution(int taskId, long result) {
         taskStore.get(taskId).updateSolution(result);
     }
 }
