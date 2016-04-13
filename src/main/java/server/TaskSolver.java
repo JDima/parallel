@@ -7,8 +7,6 @@ import communication.Protocol;
  */
 public class TaskSolver {
 
-    private static final Object monitor = new Object();
-
     private TaskStore taskStore;
 
     public TaskSolver(TaskStore taskStore) {
@@ -34,30 +32,23 @@ public class TaskSolver {
         return a;
     }
 
-    private long getValue(Protocol.Task.Param param) {
+    private long getValue(Protocol.Task.Param param) throws InterruptedException {
         if (param.hasDependentTaskId())
-            return taskStore.getSolution(param.getDependentTaskId());
+            return taskStore.getResult(param.getDependentTaskId());
         return param.getValue();
     }
 
-    public long solveTask(ClientTask clientTask) {
-        synchronized(monitor) {
-            while (notReady(clientTask)) {
-                try {
-                    monitor.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        Protocol.Task task = clientTask.getTask();
-        long result = solve(getValue(task.getA()), getValue(task.getB()),
-                getValue(task.getP()), getValue(task.getM()), task.getN());
+    public long solveTask(ClientTask clientTask) throws InterruptedException {
+        synchronized (taskStore.getMonitor(clientTask.getTaskId())) {
 
-        synchronized(monitor) {
-            monitor.notifyAll();
-        }
+            notReady(clientTask);
 
-        return result;
+            Protocol.Task task = clientTask.getTask();
+            long result = solve(getValue(task.getA()), getValue(task.getB()),
+                    getValue(task.getP()), getValue(task.getM()), task.getN());
+
+            taskStore.updateResult(clientTask.getTaskId(), result);
+            return result;
+        }
     }
 }

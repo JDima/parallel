@@ -17,8 +17,15 @@ public class ListTask extends TaskThread {
 
     @Override
     public void run() {
-        LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
-        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder().addAllTasks(tasks).setStatus(Protocol.Status.OK);
+        Protocol.ListTasksResponse.Builder submitTaskResponse = Protocol.ListTasksResponse.newBuilder();
+
+        try {
+            LinkedList<Protocol.ListTasksResponse.TaskDescription> tasks = taskManager.getTasks();
+            submitTaskResponse.addAllTasks(tasks).setStatus(Protocol.Status.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            submitTaskResponse.setStatus(Protocol.Status.ERROR);
+        }
         response.setListResponse(submitTaskResponse);
         super.run();
     }

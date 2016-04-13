@@ -5,6 +5,7 @@ import communication.Protocol;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.List;
 
 public class Client{
 
@@ -31,6 +32,27 @@ public class Client{
         Protocol.ServerResponse response = run(requestBuilder);
         Common.printTaskRepsonse(response);
         return response.getSubmitResponse().getSubmittedTaskId();
+    }
+
+    public Long subscribe(int taskId) {
+        Protocol.ServerRequest.Builder requestBuilder = Protocol.ServerRequest.newBuilder().
+                setSubscribe(Protocol.Subscribe.newBuilder().
+                        setTaskId(taskId));
+        Protocol.ServerResponse response = run(requestBuilder);
+        Protocol.SubscribeResponse subscribeResponse = response.getSubscribeResponse();
+        if (subscribeResponse.getStatus().equals(Protocol.Status.OK)) {
+            return subscribeResponse.getValue();
+        }
+
+        return null;
+    }
+
+    public List<Protocol.ListTasksResponse.TaskDescription> getList() {
+        Protocol.ServerRequest.Builder requestBuilder = Protocol.ServerRequest.newBuilder().
+                setList(Protocol.ListTasks.newBuilder());
+        Protocol.ServerResponse response = run(requestBuilder);
+
+        return response.getListResponse().getTasksList();
     }
 
     public Protocol.ServerResponse run(Protocol.ServerRequest.Builder requestBuilder) {

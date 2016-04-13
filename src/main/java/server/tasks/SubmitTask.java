@@ -6,24 +6,26 @@ import server.TaskManager;
 import java.io.OutputStream;
 import java.net.Socket;
 
-/**
- * Created by JDima on 13/04/16.
- */
 public class SubmitTask extends TaskThread {
 
     public SubmitTask(Socket connectionSocket, Protocol.ServerRequest request, TaskManager taskManager) {
         super(connectionSocket, request, taskManager);
-
     }
 
     @Override
     public void run() {
-        Protocol.Task task = request.getSubmit().getTask();
-        int taskId = taskManager.addTask(request.getClientId(), task);
+        int taskId = 0;
+        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder();
+        try {
+            Protocol.Task task = request.getSubmit().getTask();
+            taskId = taskManager.addTask(request.getClientId(), task);
+            submitTaskResponse.setSubmittedTaskId(taskId);
+            submitTaskResponse.setStatus(Protocol.Status.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            submitTaskResponse.setStatus(Protocol.Status.ERROR);
+        }
 
-        Protocol.SubmitTaskResponse.Builder submitTaskResponse = Protocol.SubmitTaskResponse.newBuilder().
-                setSubmittedTaskId(taskId).
-                setStatus(Protocol.Status.OK);
         response.setSubmitResponse(submitTaskResponse);
         super.run();
     }

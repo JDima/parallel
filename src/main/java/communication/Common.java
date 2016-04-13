@@ -23,7 +23,7 @@ public class Common {
 
         if (response.hasListResponse()) {
             int countTask = response.getListResponse().getTasksCount();
-            System.out.println("Calculating on the server:");
+            System.out.println("Tasks on the server:");
             for (int iTask = 0; iTask < countTask; iTask++)
             {
                 System.out.println(response.getListResponse().getTasks(iTask).getTaskId());

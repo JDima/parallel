@@ -21,9 +21,9 @@ public class TaskManager {
 
     }
 
-    public int addTask(String clientId, Protocol.Task task) {
+    public int addTask(String clientId, Protocol.Task task) throws InterruptedException {
         int taskId = taskCount.addAndGet(1);
-        ClientTask clientTask = new ClientTask(clientId, task);
+        ClientTask clientTask = new ClientTask(clientId, taskId, task);
         taskStore.addTask(taskId, clientTask);
         taskSolver.solveTask(clientTask);
         return taskId;
@@ -40,11 +40,12 @@ public class TaskManager {
             if (task.isSolved())
                 descDuilder.setResult(task.getResult());
             descDuilder.setClientId(task.getClientId());
+            listTasks.add(descDuilder.build());
         }
         return listTasks;
     }
 
-    public long getResult(int taskId) {
-        return 0;
+    public long getResult(int taskId) throws InterruptedException {
+        return taskStore.getResult(taskId);
     }
 }

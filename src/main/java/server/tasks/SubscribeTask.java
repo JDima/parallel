@@ -14,8 +14,16 @@ public class SubscribeTask extends TaskThread {
 
     @Override
     public void run() {
-        long result = taskManager.getResult(request.getSubscribe().getTaskId());
-        Protocol.SubscribeResponse.Builder subscribeTaskResponse = Protocol.SubscribeResponse.newBuilder().setValue(result);
+        long result = 0;
+        Protocol.SubscribeResponse.Builder subscribeTaskResponse = Protocol.SubscribeResponse.newBuilder();
+        try {
+            result = taskManager.getResult(request.getSubscribe().getTaskId());
+            subscribeTaskResponse.setValue(result);
+            subscribeTaskResponse.setStatus(Protocol.Status.OK);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            subscribeTaskResponse.setStatus(Protocol.Status.ERROR);
+        }
         response.setSubscribeResponse(subscribeTaskResponse);
         super.run();
     }
