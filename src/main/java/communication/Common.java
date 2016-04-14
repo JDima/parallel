@@ -28,7 +28,7 @@ public class Common {
 
         if (response.hasListResponse()) {
             int countTask = response.getListResponse().getTasksCount();
-            sb.append(" Tasks on the server: ");
+            sb.append(" Tasks on the server: \n");
             for (int iTask = 0; iTask < countTask; iTask++) {
                 Protocol.ListTasksResponse.TaskDescription task = response.getListResponse().getTasks(iTask);
                 if (task.hasResult()) {
