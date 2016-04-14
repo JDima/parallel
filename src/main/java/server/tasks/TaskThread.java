@@ -12,6 +12,7 @@ public class TaskThread implements Runnable{
 
     protected Protocol.ServerRequest request;
     protected Protocol.ServerResponse.Builder response;
+
     protected TaskManager taskManager;
     private Socket connectionSocket;
 
@@ -21,7 +22,8 @@ public class TaskThread implements Runnable{
         this.connectionSocket = connectionSocket;
         response = Protocol.ServerResponse.newBuilder().setRequestId(request.getRequestId());
         response.setRequestId(request.getRequestId());
-        Common.printServerRequest(request);
+
+        Common.printTaskInfo(request);
     }
 
     @Override
@@ -31,7 +33,6 @@ public class TaskThread implements Runnable{
                     setResponse(response).
                     build();
 
-            Common.printTaskRepsonse(responseMessage.getResponse());
             OutputStream out = connectionSocket.getOutputStream();
             responseMessage.writeTo(out);
             out.close();

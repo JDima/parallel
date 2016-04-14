@@ -41,7 +41,6 @@ public class TaskSolver {
             notReady(clientTask);
 
             Protocol.Task task = clientTask.getTask();
-            System.out.println("Solver: " + Thread.currentThread().getName());
             long result = solve(getValue(task.getA()), getValue(task.getB()),
                     getValue(task.getP()), getValue(task.getM()), task.getN());
 

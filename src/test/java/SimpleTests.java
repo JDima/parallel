@@ -28,6 +28,50 @@ public class SimpleTests {
                 build();
     }
 
+    private Protocol.Task getDependTask(int depend1, int depend2, int depend3, int depend4) {
+        return Protocol.Task.newBuilder().
+                setA(Protocol.Task.Param.newBuilder().setDependentTaskId(depend1)).
+                setB(Protocol.Task.Param.newBuilder().setDependentTaskId(depend2)).
+                setM(Protocol.Task.Param.newBuilder().setDependentTaskId(depend3)).
+                setP(Protocol.Task.Param.newBuilder().setDependentTaskId(depend4)).
+                setN(1000000000).
+                build();
+    }
+
+    public void submitHardTask() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Client client = new Client("localhost", 1500);
+                client.submitTask(getHardTask());
+            }
+        }).start();
+    }
+
+    public void subscribeTask() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Client client = new Client("localhost", 1500);
+                client.subscribe(5);
+            }
+        }).start();
+    }
+
+    public void printList(List<Protocol.ListTasksResponse.TaskDescription> tasks)
+    {
+        StringBuilder sb = new StringBuilder();
+        for (Protocol.ListTasksResponse.TaskDescription task : tasks) {
+            if (task.hasResult()) {
+                sb.append(task.getTaskId() +  " - " + task.getResult());
+            } else {
+                sb.append(task.getTaskId() + " - NA");
+            }
+            sb.append(" || ");
+        }
+        System.out.println(sb.toString());
+    }
+
     @Test
     public void SimpleTest() throws InterruptedException {
 
@@ -38,31 +82,41 @@ public class SimpleTests {
 
         Client client = new Client("localhost", 1500);
 
-        System.out.println("Client" + Thread.currentThread().getName());
-        client.submitTask(getSimpleTask());
+        for (int i = 0; i < 4; i++)
+            submitHardTask();
+
+        Thread.sleep(100);
+
+        List<Protocol.ListTasksResponse.TaskDescription> tasks = client.getList();
+        printList(tasks);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Client client = new Client("localhost", 1500);
-                client.submitTask(getHardTask());
+                client.submitTask(getDependTask(1, 2, 3, 4));
             }
         }).start();
 
+        Thread.sleep(100);
 
-        System.out.println("Client" + Thread.currentThread().getName());
-        List<Protocol.ListTasksResponse.TaskDescription> tasks = client.getList();
+        tasks = client.getList();
+        printList(tasks);
 
-        for (Protocol.ListTasksResponse.TaskDescription task : tasks) {
-            if (task.hasResult()) {
-                System.out.println(task.getTaskId() +  " " + task.getResult());
-            } else {
-                System.out.println(task.getTaskId());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Client client = new Client("localhost", 1500);
+                client.submitTask(getDependTask(1, 2, 3, 5));
             }
-        }
+        }).start();
 
-        System.out.println(client.subscribe(2));
+        for (int i = 0; i < 4; i++)
+            subscribeTask();
 
-        serverThread.stop();
+        System.out.println(client.subscribe(6));
+
+        tasks = client.getList();
+        printList(tasks);
     }
 }

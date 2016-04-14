@@ -3,19 +3,23 @@ package communication;
 public class Common {
 
     public static void printTaskInfo(Protocol.ServerRequest request) {
-        System.out.println("Request id  " + request.getRequestId());
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Request id: " + request.getRequestId());
+        sb.append(" Client id: " + request.getClientId());
+
 
         if (request.hasList()) {
-            System.out.println("Request for task list.");
+            sb.append(" Type: getlist");
         } else if (request.hasSubmit()) {
-            System.out.println("Submit new task:");
-            printTask(request.getSubmit().getTask());
+            sb.append(" Type: submit\n");
+            printTask(sb, request.getSubmit().getTask());
         } else if (request.hasSubscribe()) {
-            System.out.println("Subscribe for task " + request.getSubscribe().getTaskId());
+            sb.append(" Type: subscribe " + request.getSubscribe().getTaskId());
         } else {
-            System.out.println("Unknown type of request");
+            sb.append(" Unknown type of request");
         }
-        System.out.println();
+        System.out.println(sb.toString());
         System.out.println();
     }
 
@@ -29,7 +33,7 @@ public class Common {
                 System.out.println(response.getListResponse().getTasks(iTask).getTaskId());
             }
         } else if (response.hasSubmitResponse()) {
-            System.out.println("Task " + response.getSubmitResponse().getSubmittedTaskId() +" was submitted");
+            System.out.println("Task " + response.getSubmitResponse().getSubmittedTaskId() + " was submitted");
         } else if (response.hasSubscribeResponse()) {
             if (response.getSubscribeResponse().getStatus() == Protocol.Status.ERROR) {
                 System.out.println("Not calculated for request " + response.getRequestId());
@@ -44,33 +48,19 @@ public class Common {
 
     }
 
-
-    public static void printServerRequest(Protocol.ServerRequest request) {
-        System.out.println("Server get task from client " + request.getClientId());
-        System.out.println("Request id  " + request.getRequestId());
-
-        printTaskInfo(request);
-    }
-
-    public static void printClientRequest(Protocol.ServerRequest request) {
-        System.out.println("Client " + request.getClientId() + " send new task.");
-
-        printTaskInfo(request);
-    }
-
-    public static void printParam(String paramValue, Protocol.Task.Param param) {
+    public static void printParam(StringBuilder sb, String paramValue, Protocol.Task.Param param) {
         if (param.hasDependentTaskId()) {
-            System.out.print(paramValue + "is depends on " + param.getDependentTaskId());
+            sb.append(paramValue + " depends on " + param.getDependentTaskId());
         } else {
-            System.out.print(paramValue + " = " + param.getValue());
+            sb.append(paramValue + " = " + param.getValue());
         }
     }
 
-    public static void printTask(Protocol.Task task) {
-        printParam("A", task.getA());
-        printParam(", B", task.getB());
-        printParam(", P", task.getP());
-        printParam(", M", task.getM());
-        System.out.print(", N = " + task.getN());
+    public static void printTask(StringBuilder sb, Protocol.Task task) {
+        printParam(sb, "A", task.getA());
+        printParam(sb, ", B", task.getB());
+        printParam(sb, ", P", task.getP());
+        printParam(sb, ", M", task.getM());
+        sb.append(", N = " + task.getN());
     }
 }
