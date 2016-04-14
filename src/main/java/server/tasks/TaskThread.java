@@ -38,6 +38,8 @@ public class TaskThread implements Runnable{
             out.close();
             connectionSocket.close();
 
+            Common.printTaskRepsonse(responseMessage.getResponse());
+
         } catch (IOException e) {
             e.printStackTrace();
         }

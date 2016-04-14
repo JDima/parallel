@@ -67,7 +67,7 @@ public class Server extends Thread {
     public void run() {
         try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
-            System.out.println("Server was started (Host: " + this.host + ", port:" + this.port);
+            System.out.println("Server was started (Host: " + this.host + ", port: " + this.port);
             while(true) {
                 new Request(serverSock.accept()).start();
             }

@@ -5,6 +5,8 @@ import server.Server;
 
 import java.util.List;
 
+import static junit.framework.TestCase.assertEquals;
+
 public class SimpleTests {
 
 
@@ -86,9 +88,7 @@ public class SimpleTests {
             submitHardTask();
 
         Thread.sleep(100);
-
-        List<Protocol.ListTasksResponse.TaskDescription> tasks = client.getList();
-        printList(tasks);
+        client.getList();
 
         new Thread(new Runnable() {
             @Override
@@ -99,9 +99,7 @@ public class SimpleTests {
         }).start();
 
         Thread.sleep(100);
-
-        tasks = client.getList();
-        printList(tasks);
+        client.getList();
 
         new Thread(new Runnable() {
             @Override
@@ -114,9 +112,10 @@ public class SimpleTests {
         for (int i = 0; i < 4; i++)
             subscribeTask();
 
-        System.out.println(client.subscribe(6));
+        long actual = client.subscribe(6);
+        client.getList();
 
-        tasks = client.getList();
-        printList(tasks);
+        assertEquals(0, actual);
+
     }
 }
