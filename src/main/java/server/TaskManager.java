@@ -1,7 +1,6 @@
 package server;
 import communication.Protocol;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,7 +44,9 @@ public class TaskManager {
         return listTasks;
     }
 
-    public long getResult(int taskId) throws InterruptedException {
+    public long getResult(int taskId) throws Exception {
+        if (!taskStore.contains(taskId))
+            throw new Exception();
         return taskStore.getResult(taskId);
     }
 }

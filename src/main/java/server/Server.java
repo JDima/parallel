@@ -1,7 +1,5 @@
 package server;
 
-
-import communication.Common;
 import communication.Protocol;
 import server.tasks.ListTask;
 import server.tasks.SubmitTask;
@@ -11,8 +9,6 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.List;
 
 public class Server extends Thread{
 
@@ -49,9 +45,9 @@ public class Server extends Thread{
         @Override
         public void run() {
             try (InputStream in = connectionSocket.getInputStream()) {
-
+                System.out.println("ServerRequest: " + Thread.currentThread().getName());
                 Protocol.ServerRequest request = Protocol.WrapperMessage.parseDelimitedFrom(in).getRequest();
-                Thread thread;
+
                 if (request.hasSubmit()) {
                     new SubmitTask(connectionSocket, request, taskManager).run();
                 } else if (request.hasList()) {
@@ -73,8 +69,7 @@ public class Server extends Thread{
     public void run() {
         try (ServerSocket serverSock = new ServerSocket()) {
             serverSock.bind(new InetSocketAddress(this.host, this.port));
-            System.out.println("Server was started.");
-
+            System.out.println("Server was started." + Thread.currentThread().getName());
             while(true) {
                 new Request(serverSock.accept()).start();
             }

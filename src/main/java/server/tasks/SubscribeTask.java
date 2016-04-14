@@ -20,7 +20,7 @@ public class SubscribeTask extends TaskThread {
             result = taskManager.getResult(request.getSubscribe().getTaskId());
             subscribeTaskResponse.setValue(result);
             subscribeTaskResponse.setStatus(Protocol.Status.OK);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             subscribeTaskResponse.setStatus(Protocol.Status.ERROR);
         }

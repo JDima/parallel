@@ -24,7 +24,7 @@ public class SimpleTests {
                 setB(Protocol.Task.Param.newBuilder().setValue(23456)).
                 setM(Protocol.Task.Param.newBuilder().setValue(34567)).
                 setP(Protocol.Task.Param.newBuilder().setValue(45678)).
-                setN(10000000).
+                setN(1000000000).
                 build();
     }
 
@@ -37,9 +37,20 @@ public class SimpleTests {
         Thread.sleep(1000);
 
         Client client = new Client("localhost", 1500);
-        client.submitTask(getSimpleTask());
-        client.submitTask(getHardTask());
 
+        System.out.println("Client" + Thread.currentThread().getName());
+        client.submitTask(getSimpleTask());
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Client client = new Client("localhost", 1500);
+                client.submitTask(getHardTask());
+            }
+        }).start();
+
+
+        System.out.println("Client" + Thread.currentThread().getName());
         List<Protocol.ListTasksResponse.TaskDescription> tasks = client.getList();
 
         for (Protocol.ListTasksResponse.TaskDescription task : tasks) {

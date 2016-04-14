@@ -7,9 +7,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 
-/**
- * Created by JDima on 13/04/16.
- */
 public class ListTask extends TaskThread {
     public ListTask(Socket connectionSocket, Protocol.ServerRequest request, TaskManager taskManager) {
         super(connectionSocket, request, taskManager);

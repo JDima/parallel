@@ -4,9 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by JDima on 13/04/16.
- */
+
 public class TaskStore {
     private HashMap<Integer, ClientTask> taskStore;
     private HashMap<Integer, Object> taskLock;
@@ -14,6 +12,10 @@ public class TaskStore {
     public TaskStore () {
         taskStore = new HashMap<>();
         taskLock = new HashMap<>();
+    }
+
+    public boolean contains(int taskId) {
+        return taskStore.containsKey(taskId);
     }
 
     public boolean isSolved(int taskId) {
