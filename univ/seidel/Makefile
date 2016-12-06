@@ -1,5 +1,5 @@
 CC     = g++
-CFLAGS = -c -Wall -fopenmp -lm -O3
+CFLAGS = -c -fopenmp -lm -O3
 # FC     = gfortran
 # FFLAGS = -fopenmp -lm -O3
 LDFLAGS= -g -fopenmp
