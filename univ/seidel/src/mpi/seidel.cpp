@@ -1,4 +1,4 @@
-#include <omp.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <vector>
 #include <cmath>
@@ -34,12 +34,10 @@ std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<do
   std::vector<double> x(b.size(), 1.0);
   std::vector<double> p(b.size(), 1.0);
 
-  #pragma omp parallel num_threads(numThreads) firstprivate(i, j, temp) shared(a, b, x, p)
   do
   {
     for (i = 0; i < n; i++)
       p[i] = x[i];
-    #pragma omp for schedule(static, n/omp_get_num_threads())
     for (i = 0; i < n; i++)
     {
       temp = 0.0;
@@ -54,21 +52,27 @@ std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<do
 }
 
 
-int main() {
-  int n = 20000;
+int main(int argc, char *argv[]) {
+  int n = 2000;
+  int rank, nodes;
   double start_time, end_time, tick;
   std::vector< std::vector<double> > A(n, std::vector<double>(n));
   std::vector<double> b(n, 0);
 
+  MPI_Init(&argc, &argv);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nodes);
+  
   for(int i = 0; i < n; i++){
       b[i] = n * sqrt(n) + n;
       for(int j = 0; j < n; j++)
           A[i][j] = 1.0 + n * sqrt(n) * (i==j);
   }
-
-  start_time = omp_get_wtime();
+  start_time = MPI_Wtime();
   std::vector<double> res = seidel(A, b);
-  end_time = omp_get_wtime();
+  end_time = MPI_Wtime();
+  MPI_Finalize();
 
   std::cout << "Running time: " << end_time - start_time << " sec"<< std::endl;
 }
