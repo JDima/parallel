@@ -4,6 +4,8 @@
 #include <cmath>
 #include <iostream>
 
+#define ROOT 0
+
 void printx(std::vector<double> &vec)
 {
   for(int i = 0; i < vec.size(); i++)
@@ -63,7 +65,11 @@ int main(int argc, char *argv[]) {
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nodes);
-  
+
+  if(rank == ROOT){
+    printf("%i\n", rank);
+  }
+
   for(int i = 0; i < n; i++){
       b[i] = n * sqrt(n) + n;
       for(int j = 0; j < n; j++)

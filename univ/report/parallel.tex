@@ -1,0 +1,106 @@
+\documentclass[a4paper,rep]{thesisby}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, russian]{babel}
+\usepackage{lastpage}
+
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{longtable,array}
+\usepackage{fixltx2e}
+\usepackage{multirow}
+
+\usepackage{afterpage}
+
+\usepackage{algorithmic}
+\usepackage{algorithm}
+
+
+\usepackage{color}
+
+
+\emergencystretch=25pt
+
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+\renewcommand{\theequation}{\arabic{equation}}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\labelenumii}{\arabic{enumii}}
+
+\newcommand*{\mbb}{\mathbb}
+\newcommand*{\mbf}{\mathbf}
+
+\newcommand*{\diff}{\mathop{}\!\mathrm{d}}% Differential
+\newcommand*{\pd}{\partial}% Partial differential
+\newcommand*{\im}{\ensuremath{\mathrm{i}}}% Imaginary unit
+\newcommand*{\e}{\mathop{\mathrm{e}}\nolimits}% The number "e"
+\newcommand*{\const}{\ensuremath{\mathrm{const}}}% const
+\DeclareMathOperator{\diverg}{div}% Divergence
+
+\newcommand*{\Four}{\mathcal{F}}%{\hat}% Fourier transform
+\newcommand*{\Lapl}{\mathcal{L}}%{\tilde}% Laplace transform
+\newcommand*{\ctrw}{\mathrm{RW}}
+\newcommand*{\dctrw}{\mathrm{DRW}}
+\newcommand*{\drwg}{\mathrm{DRWG}}
+\newcommand*{\drwb}{\mathrm{DRWB}}
+\newcommand*{\te}{\mathrm{TE}}
+\newcommand*{\de}{\mathrm{DE}}
+\newcommand*{\Gauss}{\mathrm{G}}
+\newcommand*{\Bern}{\mathrm{B}}
+\newcommand*{\discr}{\mathrm{d}}
+\newcommand*{\singul}{\mathrm{s}}
+\newcommand*{\regul}{\mathrm{r}}
+
+\newcommand{\Rb}{\mathbb R}
+\DeclareMathOperator{\dist}{dist} \DeclareMathOperator{\diam}{diam}
+
+\newcommand{\diffd}[2]{\frac{\partial^2}{\partial #1 \partial #2}}
+\newcommand{\sumd}[2]{\sum_{u = #1}^{#2}}
+\newcommand{\ceilr}{\lceil r \rceil}
+\newcommand{\floor}[1]{\lfloor #1 \rfloor}
+\newcommand{\enbrace}[1]{\lb #1 \rb}
+\newcommand{\inv}[1]{{#1}^{-1}}
+\newcommand{\setdef}[2]{\left\{ #1\ \left|\ #2 \right.\right\}}
+\newcommand{\seqz}[2]{\left\{ {#1}_{#2} \right\}_{#2\in\Zb}}
+\newcommand{\seq}[1]{ \{ #1 \} }
+\newcommand{\half}[1]{\frac{#1}{2}}
+\newcommand{\vmod}[1]{\left| #1 \right|}
+\newcommand{\Ah}{\hat{A}}
+\newcommand{\No}{\textnumero}
+
+\usepackage{graphicx}
+\usepackage{epstopdf}
+
+\textwidth=170mm \textheight=240mm
+
+\makeatletter
+\renewcommand\@biblabel[1]{#1 }
+\makeatother
+
+\DeclareMathSymbol{\Pi}{\mathalpha}{letters}{"05}
+
+\begin{document}
+
+\graphicspath{{./img/}}
+
+\include{titlepage}
+
+\newpage
+\tableofcontents
+
+
+\newpage
+\include{seidel}
+
+\newpage
+\include{laplace}
+
+
+\newpage
+\chapter*{Выводы}
+
+\newpage
+\bibliographystyle{utf8gost71u}
+\bibliography{biblio}
+
+\end{document}

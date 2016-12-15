@@ -1,4 +1,4 @@
-CC     = mpic++
+CC     = mpicxx
 CFLAGS = -c -O3
 # FC     = gfortran
 # FFLAGS = -fopenmp -lm -O3
