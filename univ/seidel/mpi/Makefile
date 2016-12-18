@@ -1,10 +1,10 @@
-CC     = mpicxx
+CC     = mpicc
 CFLAGS = -c -O3
 # FC     = gfortran
 # FFLAGS = -fopenmp -lm -O3
-LDFLAGS=
-SOURCES=seidel.cpp
-OBJECTS=$(SOURCES:.cpp=.o)
+LDFLAGS= -lm
+SOURCES=seidel.c
+OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=seidel
 
 all: $(SOURCES) $(EXECUTABLE)
