@@ -1,84 +1,94 @@
 #include <mpi.h>
 #include <stdio.h>
-#include <vector>
-#include <cmath>
-#include <iostream>
+#include <stdlib.h>
+#include <math.h>
 
 #define ROOT 0
 
-void printx(std::vector<double> &vec)
+void printx(double *x, int n)
 {
-  for(int i = 0; i < vec.size(); i++)
-    std::cout << vec[i] << " ";
-  std::cout << std::endl;
+  for(int i = 0; i < n; i++)
+    printf("%2.2f, ", x[i]);
+  printf("\n");
 }
 
 
-bool converge(std::vector<double> &xk, std::vector<double> &xkp)
+double converge(double *xk, double *xkp, int n)
 {
-  int n = xk.size();
   double norm = 0.0;
   for (int i = 0; i < n; i++) {
     norm += (xk[i] - xkp[i]) * (xk[i] - xkp[i]);
   }
-  if (sqrt(norm) >= 1e-5)
-    return false;
-  return true;
+  return sqrt(norm);
 }
-
-std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<double> &b)
-{
-  double temp;
-  int n = b.size();
-  int i = 0, j = 0;
-  int numThreads = 8;
-
-  std::vector<double> x(b.size(), 1.0);
-  std::vector<double> p(b.size(), 1.0);
-
-  do
-  {
-    for (i = 0; i < n; i++)
-      p[i] = x[i];
-    for (i = 0; i < n; i++)
-    {
-      temp = 0.0;
-      for (j = 0; j < i; j++)
-        temp += (a[i][j] * x[j]);
-      for (j = i + 1; j < n; j++)
-        temp += (a[i][j] * p[j]);
-      x[i] = (b[i] - temp) / a[i][i];
-    }
-  } while (!converge(x, p));
-  return x;
-}
-
 
 int main(int argc, char *argv[]) {
-  int n = 2000;
-  int rank, nodes;
+  int n, nstrip, diagIndex;
+  int rank, nodes, rowIndex;
   double start_time, end_time, tick;
-  std::vector< std::vector<double> > A(n, std::vector<double>(n));
-  std::vector<double> b(n, 0);
+  double *A, *a, *B, *b, *tmp;
+  n = atoi(argv[1]);
+  double *xx = (double*)calloc(n, sizeof(double));
+  double *p = (double*)calloc(n, sizeof(double));
+  double temp, norm;
+  int i = 0, j = 0, iter = 0;
 
   MPI_Init(&argc, &argv);
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nodes);
 
+  nstrip = n/nodes;
+  a = (double*)calloc(n * nstrip, sizeof(double));
+  b = (double*)calloc(nstrip, sizeof(double));
   if(rank == ROOT){
-    printf("%i\n", rank);
+    // printf("%i\n", rank);
+    // printf("%i\n", nstrip);
+    A = (double*)calloc(n * n, sizeof(double));
+    B = (double*)calloc(n, sizeof(double));
+    for(int i = 0; i < n; i++){
+        B[i] = n * sqrt(n) + n;
+        rowIndex = i * n;
+        for(int j = 0; j < n; j++)
+            A[rowIndex + j] = 1.0 + n * sqrt(n) * (i==j);
+    }
   }
-
-  for(int i = 0; i < n; i++){
-      b[i] = n * sqrt(n) + n;
-      for(int j = 0; j < n; j++)
-          A[i][j] = 1.0 + n * sqrt(n) * (i==j);
-  }
+  double *x = (double*)calloc(nstrip, sizeof(double));
+  MPI_Scatter(A, n*nstrip, MPI_DOUBLE, a, n*nstrip, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+  MPI_Scatter(B, nstrip, MPI_DOUBLE, b, nstrip, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
   start_time = MPI_Wtime();
-  std::vector<double> res = seidel(A, b);
+  do
+  {
+    for (i = 0; i < n; i++)
+      p[i] = xx[i];
+    for (i = 0; i < nstrip; i++)
+    {
+      temp = 0.0;
+      rowIndex = i * n;
+      diagIndex = i+rank*nstrip;
+      for (j = 0; j < i; j++)
+        if(diagIndex != j)
+          temp += (a[rowIndex + j] * x[j]);
+      for (j = i + 1; j < n; j++)
+        if(diagIndex != j)
+          temp += (a[rowIndex + j] * p[j]);
+      x[i] = (b[i] - temp) / a[rowIndex + diagIndex];
+      iter++;
+    }
+    MPI_Gather(x, nstrip, MPI_DOUBLE, xx, nstrip, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    if(rank == ROOT){
+      norm = converge(xx, p, n);
+      // printf("%f\n", norm);
+    }
+    MPI_Bcast(&norm, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    MPI_Bcast(xx, n, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+  } while (norm >= 1e-5);
+  // double* res = seidel(A, b, n, nstrip, rank);
   end_time = MPI_Wtime();
   MPI_Finalize();
-
-  std::cout << "Running time: " << end_time - start_time << " sec"<< std::endl;
+  if(rank == ROOT){
+    // printx(xx, n);
+    printf("Running time: %f sec\n", end_time - start_time);
+  }
+  return 0;
 }
