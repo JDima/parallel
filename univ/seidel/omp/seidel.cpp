@@ -1,5 +1,6 @@
 #include <omp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -54,9 +55,10 @@ std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<do
 }
 
 
-int main() {
-  int n = 20000;
+int main(int argc, char *argv[]) {
+  int n;
   double start_time, end_time, tick;
+  n = atoi(argv[1]);
   std::vector< std::vector<double> > A(n, std::vector<double>(n));
   std::vector<double> b(n, 0);
 
