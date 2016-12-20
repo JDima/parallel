@@ -42,9 +42,7 @@ std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<do
 
         x[i] = (b[i] - temp) / a[i][i];
 
-        temp = fabs(x[i] - p[i]);
-        if(temp > norm)
-          norm = temp;
+        norm = MAX(fabs(x[i] - p[i]), norm);
       }
     }
   } while (norm >= 1e-5);
