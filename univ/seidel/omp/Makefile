@@ -21,4 +21,4 @@ clean:
 default: $(EXECUTABLE)
 
 run:
-	seidel $(ARGS)
+	$(EXECUTABLE) $(ARGS)

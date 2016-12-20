@@ -1,9 +1,10 @@
 #include <omp.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <vector>
 #include <cmath>
 #include <iostream>
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 void printx(std::vector<double> &vec)
 {
@@ -12,45 +13,44 @@ void printx(std::vector<double> &vec)
   std::cout << std::endl;
 }
 
-
-bool converge(std::vector<double> &xk, std::vector<double> &xkp)
-{
-  int n = xk.size();
-  double norm = 0.0;
-  for (int i = 0; i < n; i++) {
-    norm += (xk[i] - xkp[i]) * (xk[i] - xkp[i]);
-  }
-  if (sqrt(norm) >= 1e-5)
-    return false;
-  return true;
-}
-
 std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<double> &b)
 {
-  double temp;
-  int n = b.size();
   int i = 0, j = 0;
-  int numThreads = 8;
-
-  std::vector<double> x(b.size(), 1.0);
-  std::vector<double> p(b.size(), 1.0);
-
-  #pragma omp parallel num_threads(numThreads) firstprivate(i, j, temp) shared(a, b, x, p)
+  double norm, temp = 0.0;
+  int numThreads = 8, n = b.size(), iters = 0;
+  std::vector<double> x(n);
+  for (i = 0; i < n; i++)
+    x[i] = float(i);
+  std::vector<double> p(n);
   do
   {
-    for (i = 0; i < n; i++)
-      p[i] = x[i];
-    #pragma omp for schedule(static, n/omp_get_num_threads())
-    for (i = 0; i < n; i++)
+    iters += 1;
+    norm = 0.0;
+    #pragma omp parallel num_threads(numThreads) shared(a, b, x, p, norm) private(i, j, temp)
     {
-      temp = 0.0;
-      for (j = 0; j < i; j++)
-        temp += (a[i][j] * x[j]);
-      for (j = i + 1; j < n; j++)
-        temp += (a[i][j] * p[j]);
-      x[i] = (b[i] - temp) / a[i][i];
+      #pragma omp for
+      for (i = 0; i < n; i++)
+        p[i] = x[i];
+      #pragma omp for reduction(max : norm)
+      for (i = 0; i < n; i++)
+      {
+        temp = 0.0;
+        for (j = 0; j < i; j++)
+          temp += (a[i][j] * x[j]);
+        for (j = i + 1; j < n; j++)
+          temp += (a[i][j] * p[j]);
+
+        x[i] = (b[i] - temp) / a[i][i];
+
+        temp = fabs(x[i] - p[i]);
+        if(temp > norm)
+          norm = temp;
+      }
     }
-  } while (!converge(x, p));
+  } while (norm >= 1e-5);
+
+  std::cout << "Iterations: " << iters << std::endl;
+  std::cout << "Discrepancy: " << norm << std::endl;
   return x;
 }
 
@@ -65,12 +65,12 @@ int main(int argc, char *argv[]) {
   for(int i = 0; i < n; i++){
       b[i] = n * sqrt(n) + n;
       for(int j = 0; j < n; j++)
-          A[i][j] = 1.0 + n * sqrt(n) * (i==j);
+          A[i][j] = sqrt(n) + n * sqrt(n) * (i==j);
   }
 
   start_time = omp_get_wtime();
   std::vector<double> res = seidel(A, b);
   end_time = omp_get_wtime();
-
+  // printx(res);
   std::cout << "Running time: " << end_time - start_time << " sec"<< std::endl;
 }
