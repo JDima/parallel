@@ -21,28 +21,22 @@ std::vector<double> seidel(std::vector< std::vector<double> > &a, std::vector<do
   std::vector<double> x(n);
   for (i = 0; i < n; i++)
     x[i] = float(i);
-  std::vector<double> p(n);
+
   do
   {
     iters += 1;
     norm = 0.0;
-    #pragma omp parallel num_threads(numThreads) shared(a, b, x, p, norm) private(i, j, temp)
+    #pragma omp parallel num_threads(numThreads) shared(a, b, x, norm) private(i, j, temp)
     {
-      #pragma omp for
-      for (i = 0; i < n; i++)
-        p[i] = x[i];
       #pragma omp for reduction(max : norm)
       for (i = 0; i < n; i++)
       {
         temp = 0.0;
-        for (j = 0; j < i; j++)
+        for (j = 0; j < n; j++)
           temp += (a[i][j] * x[j]);
-        for (j = i + 1; j < n; j++)
-          temp += (a[i][j] * p[j]);
-
-        x[i] = (b[i] - temp) / a[i][i];
-
-        norm = MAX(fabs(x[i] - p[i]), norm);
+        double r = (b[i] - temp) / a[i][i];
+        x[i] = x[i] + r;
+        norm = MAX(fabs(r), norm);
       }
     }
   } while (norm >= 1e-5);
