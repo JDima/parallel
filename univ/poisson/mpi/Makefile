@@ -1,11 +1,11 @@
-CC     = g++
-CFLAGS = -c -fopenmp -lm -O3
+CC     = gcc
+CFLAGS = -c -O3
 # FC     = gfortran
 # FFLAGS = -fopenmp -lm -O3
-LDFLAGS= -g -fopenmp
-SOURCES=laplace.cpp
+LDFLAGS=
+SOURCES=poisson.c
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=laplace
+EXECUTABLE=poisson
 
 all: $(SOURCES) $(EXECUTABLE)
 
@@ -16,7 +16,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o laplace
+	rm -rf *.o poisson
 
 default: $(EXECUTABLE)
 
