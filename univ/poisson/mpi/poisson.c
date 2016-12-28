@@ -1,4 +1,4 @@
-// #include <mpi.h>
+#include <mpi.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +14,16 @@ int *matDispls, *vecDispls;
 int n, matSize, procMatSize, procVecSize, vecSize;
 int rank, nodes;
 
+void printintx(int rank, int *x, int n)
+{
+  int i;
+  printf("%i ", rank);
+  for(i = 0; i < n; i++)
+    printf("%i, ", x[i]);
+  printf("\n");
+}
+
+
 double f(double x, double y) {
   return x + y;
 }
@@ -23,7 +33,7 @@ double solution(double x, double y) {
 }
 
 double * initU() {
-  int i, j;
+  int i, j, ind;
   double * U = (double*)calloc(matSize, sizeof(double));
   for(i = 0; i < vecSize; i++) {
     for(j = 0; j < vecSize; j++) {
@@ -42,7 +52,7 @@ double * initU() {
 }
 
 void initCounts() {
-  int matSum = 0, vecSum = 0, i;
+  int vecSum = 0, i;
   int rem = vecSize % nodes;
   matSendCounts = malloc(sizeof(int) * nodes);
   vecSendCounts = malloc(sizeof(int) * nodes);
@@ -51,13 +61,13 @@ void initCounts() {
 
   for(i = 0; i < nodes; i++){
       vecSendCounts[i] = procVecSize;
-      matSendCounts[i] = vecSize * procVecSize;
       if (rem > 0) {
-          sendcounts[i]++;
+          vecSendCounts[i]++;
           rem--;
       }
       vecDispls[i] = vecSum;
       matDispls[i] = vecSize * vecSum;
+      matSendCounts[i] = vecSize * vecSendCounts[i];
       vecSum += vecSendCounts[i];
   }
 }
@@ -77,7 +87,6 @@ double* init() {
   initConst();
   if(rank == ROOT)
     U = initU();
-
   initCounts();
   u = (double*)calloc(matSendCounts[rank], sizeof(double));
   MPI_Scatterv(U, matSendCounts, matDispls, MPI_DOUBLE, u, matSendCounts[rank], MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
@@ -85,41 +94,37 @@ double* init() {
 }
 
 double calcu(double left, double right, double up, double down, int i, int j) {
-  return 0.25 * (left + right + up + down - h * h * f(a + i * h, a + j * h);
+  return 0.25 * (left + right + up + down - h * h * f(a + i * h, a + j * h));
 }
 
 int main(int argc, char *argv[]) {
   double startTime, endTime;
-  double temp, local_norm, norm;
-  int* nodeVecSize;
-  double* u;
-
+  double temp, local_norm = 0.0, norm = 0.0;
+  double* u, *U;
   int i, j, ind, iter = 0;
-  n = atoi(argv[1]);
 
-  double *uup = (double*)calloc(n, sizeof(double));
-  double *udown = (double*)calloc(n, sizeof(double));
+  n = atoi(argv[1]);
 
   MPI_Init(&argc, &argv);
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &nodes);
-
   u = init();
   startTime = MPI_Wtime();
-
+  double *uup = (double*)calloc(vecSize, sizeof(double));
+  double *udown = (double*)calloc(vecSize, sizeof(double));
   do
   {
     local_norm = 0.0;
     if(rank > ROOT)
-      MPI_Send(&u[1], n, MPI_DOUBLE, rank - 1, TAGXDOWN, MPI_COMM_WORLD);
+      MPI_Send(u, vecSize, MPI_DOUBLE, rank - 1, TAGXDOWN, MPI_COMM_WORLD);
     if(rank < nodes-1)
-      MPI_Send(&u[matSendCounts[rank] - vecSize + 1], n, MPI_DOUBLE, rank + 1, TAGXUP, MPI_COMM_WORLD);
+      MPI_Send(&u[matSendCounts[rank] - vecSize], vecSize, MPI_DOUBLE, rank + 1, TAGXUP, MPI_COMM_WORLD);
 
     if(rank > ROOT)
-      MPI_Recv(uup, n, MPI_DOUBLE, rank - 1, TAGXUP, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(uup, vecSize, MPI_DOUBLE, rank - 1, TAGXUP, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     if(rank < nodes - 1)
-      MPI_Recv(udown, n, MPI_DOUBLE, rank + 1, TAGXDOWN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(udown, vecSize, MPI_DOUBLE, rank + 1, TAGXDOWN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     if (rank > ROOT){
       i = 0;
@@ -141,7 +146,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (rank < nodes - 1){
-      i = nodeVecSize[rank];
+      i = vecSendCounts[rank] - 1;
       for (j = 1; j < vecSize - 1; j++) {
         ind = i * vecSize + j;
         temp = u[ind];
@@ -150,31 +155,32 @@ int main(int argc, char *argv[]) {
       }
     }
     MPI_Allreduce(&local_norm, &norm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
     if(rank == ROOT)
       iter += 1;
   } while ( norm > 1e-5 );
   endTime = MPI_Wtime();
 
-  MPI_Gather(u, matSendCounts[rank], MPI_DOUBLE, U, matSendCounts, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-
+  if (rank == ROOT)
+    U = (double*)calloc(matSize, sizeof(double));
+  MPI_Gatherv(u, matSendCounts[rank], MPI_DOUBLE, U, matSendCounts, matDispls, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
   if (rank == ROOT) {
     for (i = 1; i < vecSize - 1; i++) {
-      printf("%f ", a + i * h);
+      // printf("%f ", a + i * h);
       for (j = 1; j < vecSize - 1; j++) {
         ind = i * vecSize + j;
         // printf("%f ", solution(a + i * h, a + j * h));
-        // printf("%f ", u[ind]);
+        // printf("%f ", U[ind]);
         printf("%f ", fabs(solution(a + i * h, a + j * h) - U[ind]));
       }
       printf("\n");
     }
   }
+  MPI_Finalize();
   if(rank == ROOT) {
     printf("Iterations: %i\n", iter);
     printf("Discrepancy: %f\n", norm);
-    printf("Running time: %f sec\n", end_time - start_time);
+    printf("Running time: %f sec\n", endTime - startTime);
     // printx(rank, x, n);
   }
-  MPI_Finalize();
+  return 0;
 }

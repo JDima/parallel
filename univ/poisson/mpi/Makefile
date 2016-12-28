@@ -1,10 +1,8 @@
-CC     = gcc
+CC     = mpicc
 CFLAGS = -c -O3
-# FC     = gfortran
-# FFLAGS = -fopenmp -lm -O3
-LDFLAGS=
+LDFLAGS= -lm
 SOURCES=poisson.c
-OBJECTS=$(SOURCES:.cpp=.o)
+OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=poisson
 
 all: $(SOURCES) $(EXECUTABLE)
@@ -21,4 +19,4 @@ clean:
 default: $(EXECUTABLE)
 
 run:
-	seidel $(ARGS)
+	poisson $(ARGS)
